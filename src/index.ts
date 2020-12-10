@@ -183,7 +183,7 @@ export class DualDID {
     }
   }
 
-  async createVP (vcJwtArray: string[], nonce: number) {
+  async createVP (vcJwtArray: string[], nonce: string | undefined) {
     const issuer = {
       did: `did:dual:${this.ethAccount.address.toLowerCase()}`,
       signer: this.jwtSigner
@@ -200,7 +200,7 @@ export class DualDID {
     return vpJwt
   }
 
-  async verifyVP (vpJwt: string, nonce: number | undefined) {
+  async verifyVP (vpJwt: string, nonce: string | undefined) {
     const { resolver } = getResolverFromJwt(vpJwt, this.serviceEndpoint)
     const verifiedVP = await verifyPresentation(vpJwt, resolver)
     if (nonce !== undefined && verifiedVP.verifiablePresentation && verifiedVP.verifiablePresentation.nonce !== nonce) {
@@ -208,6 +208,7 @@ export class DualDID {
     }
     let holder = true
     verifiedVP.verifiablePresentation.verifiableCredential.forEach((element: any) => {
+      // TODO: test all vc with smart contract
       if (element.credentialSubject && element.credentialSubject.id) {
         holder &&= verifiedVP.verifiablePresentation.holder.toString() === element.credentialSubject.id.toString()
       }

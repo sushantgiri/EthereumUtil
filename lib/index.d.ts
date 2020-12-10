@@ -39,7 +39,7 @@ export declare class DualDID {
         success: boolean;
         code?: undefined;
     }>;
-    createVP(vcJwtArray: string[], nonce: number): Promise<string>;
-    verifyVP(vpJwt: string, nonce: number | undefined): Promise<import("did-jwt-vc").VerifiedPresentation | null>;
+    createVP(vcJwtArray: string[], nonce: string | undefined): Promise<string>;
+    verifyVP(vpJwt: string, nonce: string | undefined): Promise<import("did-jwt-vc").VerifiedPresentation | null>;
 }
 export {};
