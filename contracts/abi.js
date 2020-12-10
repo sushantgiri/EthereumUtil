@@ -17,12 +17,48 @@ module.exports = [
 			{
 				"indexed": true,
 				"internalType": "uint256",
-				"name": "_status",
+				"name": "_revokeCode",
 				"type": "uint256"
 			}
 		],
 		"name": "DID",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_did",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_revokeCode",
+				"type": "uint256"
+			}
+		],
+		"name": "SetRevokeCodeDID",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_hash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_revokeCode",
+				"type": "uint256"
+			}
+		],
+		"name": "SetRevokeCodeVC",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -42,7 +78,7 @@ module.exports = [
 			{
 				"indexed": true,
 				"internalType": "uint256",
-				"name": "_status",
+				"name": "_revokeCode",
 				"type": "uint256"
 			}
 		],
@@ -62,7 +98,7 @@ module.exports = [
 				"type": "address"
 			}
 		],
-		"name": "getStatusDID",
+		"name": "GetRevokeCodeDID",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -86,7 +122,7 @@ module.exports = [
 				"type": "address"
 			}
 		],
-		"name": "getStatusVC",
+		"name": "GetRevokeCodeVC",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -95,42 +131,6 @@ module.exports = [
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_did",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_status",
-				"type": "uint256"
-			}
-		],
-		"name": "setStatusDID",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_status",
-				"type": "uint256"
-			}
-		],
-		"name": "setStatusVC",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]

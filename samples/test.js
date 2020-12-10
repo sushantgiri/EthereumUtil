@@ -1,8 +1,8 @@
 
 const { DualDID } = require('../lib/index')
 const Web3 = require('web3')
-const provider = 'http://182.162.89.51:4313'
-const smartContractAddress = ''
+const provider = 'https://ropsten.infura.io/v3/'
+const smartContractAddress = '0xB744E9cAC459097c259393e377991757230ffd42'
 
 const web3 = new Web3(provider) // TODO: geth url
 
@@ -66,16 +66,16 @@ async function vc () {
   console.log(JSON.stringify((await dualDid3.verifyVP(vp, 1)), null, 4))
 
   /*
-  console.log("<- getStatusVC ------------------------------->")
-  const result1 = await dualDid.getStatusVC( vc.hashToken, credentialStatus, dualDid.getDid().replace('did:dual:', ''))
+  console.log("<- GetRevokeCodeVC ------------------------------->")
+  const result1 = await dualDid1.GetRevokeCodeVC( vc.hashToken, credentialStatus, dualDid1.getDid().replace('did:dual:', ''))
   console.log(result1)
 
   console.log("<- setStatusVC ------------------------------->")
-  const receipt = await dualDid.setStatusVC( vc.hashToken, credentialStatus, dualDid.STATUS.SUSPENDED)
+  const receipt = await dualDid1.SetRevokeCodeVC( vc.hashToken, credentialStatus, dualDid1.STATUS.REVOKE)
   console.log(receipt)
 
-  console.log("<- getStatusVC ------------------------------->")
-  const result2 = await dualDid.getStatusVC( vc.hashToken, credentialStatus, dualDid.getDid().replace('did:dual:', ''))
+  console.log("<- GetRevokeCodeVC ------------------------------->")
+  const result2 = await dualDid1.GetRevokeCodeVC( vc.hashToken, credentialStatus, dualDid1.getDid().replace('did:dual:', ''))
   console.log(result2)
   */
 }

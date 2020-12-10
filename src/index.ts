@@ -62,8 +62,8 @@ export class DualDID {
 
   protected STATUS = {
     ACTIVATE: 0,
-    SUSPENDED: 1001,
-    REVOKED: 1002
+    REVOKE: 1,
+    // TODO: add revoked code here
   }
 
   constructor(ethAccount: any, issuerName: string, serviceEndpoint: string, web3: any = null, contractAddress: string = '') {
@@ -150,8 +150,10 @@ export class DualDID {
     return { result }
   }
 
-  async setStatusVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, newStatus:number) {
-    console.log(credentialStatus)
+  async SetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, revokeCode:number = 1) {
+    if (revokeCode === 0) {
+      return { receipt: null } 
+    }
     if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
       // TODO: test credentialStatus
       return { receipt: null }
@@ -160,21 +162,21 @@ export class DualDID {
       to: this.contract.options.address,
       gas: 400000, // gas free
       gasPrice: 0,
-      data: this.web3 ? this.contract.methods.setStatusVC(hashToken, newStatus).encodeABI() : null
+      data: this.web3 ? this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode).encodeABI() : null
     }
     const signedTx = await this.ethAccount.signTransaction(rawTx)
     const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
     return { receipt }
   }
 
-  async getStatusVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string) {
+  async GetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string) {
     try {
       if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
         // TODO: test credentialStatus
-        return { success: true, status: 0 }
+        return { success: true, code: 0 }
       }
-      const result = this.web3 ? await this.contract.methods.getStatusVC(hashToken, issuer).call() : null
-      return { success: true, status: result }
+      const result = this.web3 ? await this.contract.methods.GetRevokeCodeVC(hashToken, issuer).call() : null
+      return { success: true, code: result }
     } catch (error) {
       console.log(new Error(error))
       return { success: false }

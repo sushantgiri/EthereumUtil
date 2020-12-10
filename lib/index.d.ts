@@ -12,8 +12,7 @@ export declare class DualDID {
     private contract;
     protected STATUS: {
         ACTIVATE: number;
-        SUSPENDED: number;
-        REVOKED: number;
+        REVOKE: number;
     };
     constructor(ethAccount: any, issuerName: string, serviceEndpoint: string, web3?: any, contractAddress?: string);
     getDid(): string;
@@ -30,15 +29,15 @@ export declare class DualDID {
     verifyVC(vcJwt: string): Promise<{
         result: import("did-jwt-vc").VerifiedCredential;
     }>;
-    setStatusVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, newStatus: number): Promise<{
+    SetRevokeCodeVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, revokeCode?: number): Promise<{
         receipt: any;
     }>;
-    getStatusVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string): Promise<{
+    GetRevokeCodeVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string): Promise<{
         success: boolean;
-        status: any;
+        code: any;
     } | {
         success: boolean;
-        status?: undefined;
+        code?: undefined;
     }>;
     createVP(vcJwtArray: string[], nonce: number): Promise<string>;
     verifyVP(vpJwt: string, nonce: number | undefined): Promise<import("did-jwt-vc").VerifiedPresentation | null>;
