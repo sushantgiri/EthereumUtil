@@ -1,8 +1,8 @@
 
 const { DualDID } = require('../lib/index')
 const Web3 = require('web3')
-const provider = 'https://ropsten.infura.io/v3/'
-const smartContractAddress = '0xB744E9cAC459097c259393e377991757230ffd42'
+const provider = 'http://182.162.89.51:4313'
+const smartContractAddress = '0x783f6Bf98958baea939C4440d0Fa698Db220cda4'
 
 const web3 = new Web3(provider) // TODO: geth url
 
@@ -24,16 +24,16 @@ async function did () {
 }
 
 async function vc () {
-  const dualDid1 = new DualDID(ethAccount1, 'test1', 'test11', web3, smartContractAddress)
-  const dualDid2 = new DualDID(ethAccount2, 'test2', 'test22', web3, smartContractAddress)
-  const dualDid3 = new DualDID(ethAccount3, 'test3', 'test33', web3, smartContractAddress)
+  const issuer = new DualDID(ethAccount1, 'test1', 'test11', web3, smartContractAddress)
+  const holder = new DualDID(ethAccount2, 'test2', 'test22', web3, smartContractAddress)
+  const verifier = new DualDID(ethAccount3, 'test3', 'test33', web3, smartContractAddress)
   const credentialStatus = {
     "type": "blockChainCheck"
   }
-  const vc = await dualDid1.createVC (
+  const vc = await issuer.createVC (
     'http://issuer.dualdid.com/credentials/0001',
     ['VerifiableCredential', 'mobileLicense'],
-    dualDid2.getDid(), // holder
+    holder.getDid(), // holder
     {
       "birthday": "19930533",
       "no": "11-11-11113123123",
@@ -53,29 +53,28 @@ async function vc () {
   // console.log("<- JWT & signedTx ------------------------------->")
   // console.log(vc)
   console.log("<- verifyJWT ------------------------------->")
-  console.log(JSON.stringify((await dualDid3.verifyJWT(vc.jwt)), null, 4))
+  console.log(JSON.stringify((await verifier.verifyJWT(vc.jwt)), null, 4))
   console.log("<- verifyVC ------------------------------->")
-  console.log(JSON.stringify((await dualDid3.verifyVC(vc.jwt)), null, 4))
+  console.log(JSON.stringify((await verifier.verifyVC(vc.jwt)), null, 4))
 
   console.log("<- JWT & signedTx ------------------------------->")
-  const vp = await dualDid2.createVP([vc.jwt], 1)
+  const vp = await holder.createVP([vc.jwt], '12312312')
   console.log(vp)
   console.log("<- verifyJWT ------------------------------->")
-  console.log(JSON.stringify((await dualDid3.verifyJWT(vp)), null, 4))
+  console.log(JSON.stringify((await verifier.verifyJWT(vp)), null, 4))
   console.log("<- verifyVP ------------------------------->")
-  console.log(JSON.stringify((await dualDid3.verifyVP(vp, 1)), null, 4))
+  console.log(JSON.stringify((await verifier.verifyVP(vp, '12312312')), null, 4))
 
-  /*
   console.log("<- GetRevokeCodeVC ------------------------------->")
-  const result1 = await dualDid1.GetRevokeCodeVC( vc.hashToken, credentialStatus, dualDid1.getDid().replace('did:dual:', ''))
+  const result1 = await issuer.GetRevokeCodeVC( vc.hashToken, credentialStatus, issuer.getDid().replace('did:dual:', ''))
   console.log(result1)
-
+  /*
   console.log("<- setStatusVC ------------------------------->")
-  const receipt = await dualDid1.SetRevokeCodeVC( vc.hashToken, credentialStatus, dualDid1.STATUS.REVOKE)
+  const receipt = await issuer.SetRevokeCodeVC( vc.hashToken, credentialStatus, issuer.STATUS.REVOKE)
   console.log(receipt)
 
   console.log("<- GetRevokeCodeVC ------------------------------->")
-  const result2 = await dualDid1.GetRevokeCodeVC( vc.hashToken, credentialStatus, dualDid1.getDid().replace('did:dual:', ''))
+  const result2 = await issuer.GetRevokeCodeVC( vc.hashToken, credentialStatus, issuer.getDid().replace('did:dual:', ''))
   console.log(result2)
   */
 }
