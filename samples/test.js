@@ -2,7 +2,7 @@
 const { DualDID } = require('../lib/index')
 const Web3 = require('web3')
 const provider = 'http://182.162.89.51:4313'
-const smartContractAddress = '0x783f6Bf98958baea939C4440d0Fa698Db220cda4'
+const smartContractAddress = '0x3CF0CB3cD457b959F6027676dF79200C8EF19907'
 
 const web3 = new Web3(provider) // TODO: geth url
 
@@ -76,6 +76,9 @@ async function vc () {
   console.log("<- GetRevokeCodeVC ------------------------------->")
   const result2 = await issuer.GetRevokeCodeVC( vc.hashToken, credentialStatus, issuer.getDid().replace('did:dual:', ''))
   console.log(result2)
+
+  console.log("<- verifyVP ------------------------------->")
+  console.log(JSON.stringify((await verifier.verifyVP(vp, '12312312')), null, 4))
   */
 }
 

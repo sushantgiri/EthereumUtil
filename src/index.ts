@@ -206,14 +206,20 @@ export class DualDID {
     if (nonce !== undefined && verifiedVP.verifiablePresentation && verifiedVP.verifiablePresentation.nonce !== nonce) {
       return null
     }
-    let holder = true
-    verifiedVP.verifiablePresentation.verifiableCredential.forEach((element: any) => {
-      // TODO: test all vc with smart contract
-      if (element.credentialSubject && element.credentialSubject.id) {
-        holder &&= verifiedVP.verifiablePresentation.holder.toString() === element.credentialSubject.id.toString()
+    let verify = true
+    for (const item of verifiedVP.verifiablePresentation.verifiableCredential) {
+      if (item.credentialSubject && item.credentialSubject.id) {
+        verify &&= verifiedVP.verifiablePresentation.holder.toString() === item.credentialSubject.id.toString()
+        if (verify) {
+          const hashToken = this.web3.utils.sha3(item.proof.jwt)
+          const credentialStatus = item.vc.credentialStatus
+          const issuer = item.issuer.id.replace('did:dual:', '') 
+          const result = await this.GetRevokeCodeVC(hashToken, credentialStatus, issuer)
+          verify &&= result.success && result.code === '0'
+        }
       }
-    })
-    return holder ? verifiedVP : null
+    }
+    return verify ? verifiedVP : null
   }
 
 }
