@@ -1,11 +1,19 @@
+import { Signer } from 'did-jwt';
 interface CredentialStatus {
     id?: string;
     type: string;
 }
+interface DualSigner {
+    jwtSigner: Signer;
+    ethAccount: {
+        address: string;
+        signTransaction: (tx: any) => any;
+        sign: (data: any) => any;
+    };
+}
 export declare class DualDID {
     protected resolver: any;
-    private ethAccount;
-    private jwtSigner;
+    private dualSigner;
     private issuerName;
     private serviceEndpoint;
     private web3;
@@ -14,7 +22,7 @@ export declare class DualDID {
         ACTIVATE: number;
         REVOKE: number;
     };
-    constructor(ethAccount: any, issuerName: string, serviceEndpoint: string, web3?: any, contractAddress?: string);
+    constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3?: any, contractAddress?: string);
     getDid(): string;
     createDid(): Promise<{
         jwt: string;

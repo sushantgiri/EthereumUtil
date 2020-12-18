@@ -1,5 +1,5 @@
 import { DIDDocument, PublicKey, Resolver, ParsedDID } from 'did-resolver'
-import { SimpleSigner, createJWT, decodeJWT, verifyJWT } from 'did-jwt'
+import { Signer, createJWT, decodeJWT, verifyJWT } from 'did-jwt'
 import { JwtCredentialPayload, createVerifiableCredentialJwt } from 'did-jwt-vc'
 import { JwtPresentationPayload, createVerifiablePresentationJwt } from 'did-jwt-vc'
 import { verifyCredential, verifyPresentation } from 'did-jwt-vc'
@@ -10,6 +10,15 @@ const BLOCKCHAIN = 'blockChainCheck'
 interface CredentialStatus {
   id?: string,
   type: string
+}
+
+interface DualSigner {
+  jwtSigner: Signer,
+  ethAccount: {
+    address: string,
+    signTransaction: (tx: any) => any, 
+    sign: (data: any) => any
+  }
 }
 
 function wrapDidDocument (did: string, issuer: string, serviceEndpoint: string): DIDDocument {
@@ -53,8 +62,7 @@ function getResolverFromJwt (jwt: string, serviceEndpoint: string) {
 
 export class DualDID {
   protected resolver: any
-  private ethAccount: any
-  private jwtSigner: any
+  private dualSigner: DualSigner
   private issuerName: any
   private serviceEndpoint: any
   private web3: any
@@ -66,7 +74,7 @@ export class DualDID {
     // TODO: add revoked code here
   }
 
-  constructor(ethAccount: any, issuerName: string, serviceEndpoint: string, web3: any = null, contractAddress: string = '') {
+  constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3: any = null, contractAddress: string = '') {
     /*
       const Web3 = require('web3')
       const web3 = new Web3('http://182.162.89.51:8545')
@@ -75,33 +83,33 @@ export class DualDID {
       const ethAccount = web3.eth.accounts.privateKeyToAccount(privateKey)
       const jwtSigner = didJWT.SimpleSigner(privateKey.replace('0x',''))
 
-      const result = createDid()
+      ....
+
+      const result = await dualDid.createDid()
       web3.eth.sendSignedTransaction(result.signedTx).on('receipt', console.log)
     */
-    this.ethAccount = ethAccount
-    this.jwtSigner = SimpleSigner(ethAccount.privateKey.replace('0x',''))
+    this.dualSigner = dualSigner
     this.issuerName = issuerName
     this.serviceEndpoint = serviceEndpoint
-    this.resolver = new Resolver(getResolver(ethAccount.address.toLowerCase(), serviceEndpoint))
+    this.resolver = new Resolver(getResolver(this.getDid(), serviceEndpoint))
     this.web3 = web3
     this.contract = web3 ? new web3.eth.Contract(abi, contractAddress) : null
   }
 
   getDid() {
-    return `did:dual:${this.ethAccount.address.toLowerCase()}`
+    return `did:dual:${this.dualSigner.ethAccount.address.toLowerCase()}`
   }
 
   async createDid () {
-    const did = `did:dual:${this.ethAccount.address.toLowerCase()}`
     const jwt = await createJWT(
       {
-        aud: did,
+        aud: this.getDid(),
         name: 'estorem did'
       },
       {
         alg: 'ES256K-R',
-        issuer: did,
-        signer: this.jwtSigner
+        issuer: this.getDid(),
+        signer: this.dualSigner.jwtSigner
       }
     )
 
@@ -124,7 +132,7 @@ export class DualDID {
         id: vcID,
         type: vcType,
         issuer: {
-          id: `did:dual:${this.ethAccount.address.toLowerCase()}`,
+          id: this.getDid(),
           name: this.issuerName
         },
         issuanceDate: issuanceDate,
@@ -133,8 +141,8 @@ export class DualDID {
       }
     }
     const issuer = {
-      did: `did:dual:${this.ethAccount.address.toLowerCase()}`,
-      signer: this.jwtSigner
+      did: this.getDid(),
+      signer: this.dualSigner.jwtSigner
     }
 
     const jwt = await createVerifiableCredentialJwt(vcPayload, issuer)
@@ -164,7 +172,7 @@ export class DualDID {
       gasPrice: 0,
       data: this.web3 ? this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode).encodeABI() : null
     }
-    const signedTx = await this.ethAccount.signTransaction(rawTx)
+    const signedTx = await this.dualSigner.ethAccount.signTransaction(rawTx)
     const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
     return { receipt }
   }
@@ -185,8 +193,8 @@ export class DualDID {
 
   async createVP (vcJwtArray: string[], nonce: string | undefined) {
     const issuer = {
-      did: `did:dual:${this.ethAccount.address.toLowerCase()}`,
-      signer: this.jwtSigner
+      did: this.getDid(),
+      signer: this.dualSigner.jwtSigner
     }
     const vpPayload: JwtPresentationPayload = {
       vp: {

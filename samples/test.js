@@ -1,4 +1,4 @@
-
+const didJWT = require('did-jwt')
 const { DualDID } = require('../lib/index')
 const Web3 = require('web3')
 const provider = 'http://182.162.89.51:4313'
@@ -10,12 +10,26 @@ const privateKey1 = '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d96
 const privateKey2 = '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8710'
 const privateKey3 = '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8711'
 
-const ethAccount1 = web3.eth.accounts.privateKeyToAccount(privateKey1)
-const ethAccount2 = web3.eth.accounts.privateKeyToAccount(privateKey2)
-const ethAccount3 = web3.eth.accounts.privateKeyToAccount(privateKey3)
+function createEthAccount (privateKey) {
+  const account = web3.eth.accounts.privateKeyToAccount(privateKey)
+  return {
+    address: account.address,
+    signTransaction: account.signTransaction, 
+    sign: account.sign
+  }
+}
+
+function createDualSigner (jwtSigner, ethAccount) {
+  return { jwtSigner, ethAccount }
+}
+
+const ethAccount1 = createEthAccount(privateKey1)
+const ethAccount2 = createEthAccount(privateKey2)
+const ethAccount3 = createEthAccount(privateKey3)
 
 async function did () {
-  const dualDid = new DualDID(ethAccount1, 'test1', 'test2', web3, smartContractAddress)
+  const dualSigner = createDualSigner(didJWT.SimpleSigner(privateKey1.replace('0x','')), ethAccount1)
+  const dualDid = new DualDID(dualSigner, 'test1', 'test2', web3, smartContractAddress)
   const did = await dualDid.createDid()
   console.log("<- JWT & signedTx ------------------------------->")
   console.log(did)
@@ -24,9 +38,13 @@ async function did () {
 }
 
 async function vc () {
-  const issuer = new DualDID(ethAccount1, 'test1', 'test11', web3, smartContractAddress)
-  const holder = new DualDID(ethAccount2, 'test2', 'test22', web3, smartContractAddress)
-  const verifier = new DualDID(ethAccount3, 'test3', 'test33', web3, smartContractAddress)
+  const dualSigner1 = createDualSigner(didJWT.SimpleSigner(privateKey1.replace('0x','')), ethAccount1)
+  const dualSigner2 = createDualSigner(didJWT.SimpleSigner(privateKey2.replace('0x','')), ethAccount2)
+  const dualSigner3 = createDualSigner(didJWT.SimpleSigner(privateKey3.replace('0x','')), ethAccount3)
+
+  const issuer = new DualDID(dualSigner1, 'test1', 'test11', web3, smartContractAddress)
+  const holder = new DualDID(dualSigner2, 'test2', 'test22', web3, smartContractAddress)
+  const verifier = new DualDID(dualSigner3, 'test3', 'test33', web3, smartContractAddress)
   const credentialStatus = {
     "type": "blockChainCheck"
   }
