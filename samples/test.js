@@ -1,5 +1,5 @@
 const didJWT = require('did-jwt')
-const { DualDID } = require('../lib/index')
+const { DualDID, STATUS, ERROR } = require('../lib/index')
 const Web3 = require('web3')
 const provider = 'http://182.162.89.51:4313'
 const smartContractAddress = '0x3CF0CB3cD457b959F6027676dF79200C8EF19907'
@@ -88,7 +88,7 @@ async function vc () {
   console.log(result1)
   /*
   console.log("<- setStatusVC ------------------------------->")
-  const receipt = await issuer.SetRevokeCodeVC( vc.hashToken, credentialStatus, issuer.STATUS.REVOKE)
+  const receipt = await issuer.SetRevokeCodeVC( vc.hashToken, credentialStatus, STATUS.REVOKED)
   console.log(receipt)
 
   console.log("<- GetRevokeCodeVC ------------------------------->")

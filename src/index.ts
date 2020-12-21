@@ -3,6 +3,9 @@ import { Signer, createJWT, decodeJWT, verifyJWT } from 'did-jwt'
 import { JwtCredentialPayload, createVerifiableCredentialJwt } from 'did-jwt-vc'
 import { JwtPresentationPayload, createVerifiablePresentationJwt } from 'did-jwt-vc'
 import { verifyCredential, verifyPresentation } from 'did-jwt-vc'
+import { STATUS } from './status'
+import { ERROR } from './error'
+
 const abi = require('../contracts/abi')
 
 const BLOCKCHAIN = 'blockChainCheck'
@@ -60,6 +63,7 @@ function getResolverFromJwt (jwt: string, serviceEndpoint: string) {
   }
 }
 
+export { STATUS, ERROR }
 export class DualDID {
   protected resolver: any
   private dualSigner: DualSigner
@@ -67,12 +71,6 @@ export class DualDID {
   private serviceEndpoint: any
   private web3: any
   private contract: any
-
-  protected STATUS = {
-    ACTIVATE: 0,
-    REVOKE: 1,
-    // TODO: add revoked code here
-  }
 
   constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3: any = null, contractAddress: string = '') {
     /*
@@ -158,8 +156,8 @@ export class DualDID {
     return { result }
   }
 
-  async SetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, revokeCode:number = 1) {
-    if (revokeCode === 0) {
+  async SetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, revokeCode:STATUS = STATUS.REVOKED) {
+    if (revokeCode === STATUS.ACTIVATE || revokeCode === STATUS.ERROR) {
       return { receipt: null } 
     }
     if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
@@ -177,17 +175,17 @@ export class DualDID {
     return { receipt }
   }
 
-  async GetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string) {
+  async GetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string): Promise<{success: boolean, status: STATUS}> {
     try {
       if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
         // TODO: test credentialStatus
-        return { success: true, code: 0 }
+        return { success: true, status: STATUS.ACTIVATE }
       }
-      const result = this.web3 ? await this.contract.methods.GetRevokeCodeVC(hashToken, issuer).call() : null
-      return { success: true, code: result }
+      const status = this.web3 ? await this.contract.methods.GetRevokeCodeVC(hashToken, issuer).call() : STATUS.ERROR
+      return { success: true, status: parseInt(status) }
     } catch (error) {
       console.log(new Error(error))
-      return { success: false }
+      return { success: false, status: STATUS.ERROR }
     }
   }
 
@@ -202,6 +200,8 @@ export class DualDID {
         type: ['VerifiablePresentation'],
         verifiableCredential: vcJwtArray
       },
+      // nonce formate = 'dual:type:nonce:data'
+      // nonce type = did, vp, sign
       nonce,
     }
     const vpJwt = await createVerifiablePresentationJwt(vpPayload, issuer)
@@ -212,22 +212,31 @@ export class DualDID {
     const { resolver } = getResolverFromJwt(vpJwt, this.serviceEndpoint)
     const verifiedVP = await verifyPresentation(vpJwt, resolver)
     if (nonce !== undefined && verifiedVP.verifiablePresentation && verifiedVP.verifiablePresentation.nonce !== nonce) {
-      return null
+      return {success: false, data: null, ...ERROR.NONCE}
     }
     let verify = true
-    for (const item of verifiedVP.verifiablePresentation.verifiableCredential) {
-      if (item.credentialSubject && item.credentialSubject.id) {
-        verify &&= verifiedVP.verifiablePresentation.holder.toString() === item.credentialSubject.id.toString()
-        if (verify) {
-          const hashToken = this.web3.utils.sha3(item.proof.jwt)
-          const credentialStatus = item.vc.credentialStatus
-          const issuer = item.issuer.id.replace('did:dual:', '') 
-          const result = await this.GetRevokeCodeVC(hashToken, credentialStatus, issuer)
-          verify &&= result.success && result.code === '0'
+    try {
+      for (const item of verifiedVP.verifiablePresentation.verifiableCredential) {
+        if (item.credentialSubject && item.credentialSubject.id) {
+          verify &&= verifiedVP.verifiablePresentation.holder.toString() === item.credentialSubject.id.toString()
+          if (verify) {
+            const hashToken = this.web3.utils.sha3(item.proof.jwt)
+            const credentialStatus = item.vc.credentialStatus
+            const issuer = item.issuer.id.replace('did:dual:', '') 
+            const result = await this.GetRevokeCodeVC(hashToken, credentialStatus, issuer)
+            verify &&= result.success && result.status === STATUS.ACTIVATE
+            if (!verify) {
+              return {success: false, data: null, ...ERROR.REVOKED_VC}
+            }
+          } else {
+            return {success: false, data: null, ...ERROR.HOLDER_DID}
+          }
         }
       }
+    } catch (error) {
+      console.log(new Error(error))
+      return {success: false, data: null, ...ERROR.UNKONWN}
     }
-    return verify ? verifiedVP : null
+    return {success: true, data: verifiedVP, ...ERROR.NONE}
   }
-
 }
