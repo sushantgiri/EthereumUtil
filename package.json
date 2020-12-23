@@ -6,7 +6,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "sol": "truffle-flattener ./contracts/Hash.sol > ./contracts/flattener.sol"
+    "sol": "truffle-flattener ./contracts/Registry.sol > ./contracts/flattener.sol"
   },
   "author": "estorm",
   "license": "MIT",

@@ -23,6 +23,7 @@ export declare class DualDID {
     private contract;
     constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3?: any, contractAddress?: string);
     getDid(): string;
+    getAddress(): string;
     createDid(): Promise<{
         jwt: string;
         hashToken: any;
@@ -37,6 +38,38 @@ export declare class DualDID {
         result: import("did-jwt-vc").VerifiedCredential;
     }>;
     SetRevokeCodeVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, revokeCode?: STATUS): Promise<{
+        receipt: any;
+    }>;
+    SignRevokeCodeVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, revokeCode?: STATUS): Promise<{
+        parms: {
+            hashToken: string;
+            revokeCode: STATUS.ACTIVATE | STATUS.ERROR;
+            nonce: number;
+        };
+        signature: null;
+        signer?: undefined;
+    } | {
+        parms: {
+            hashToken: string;
+            revokeCode: STATUS.REVOKED;
+            nonce: number;
+        };
+        signature: null;
+        signer?: undefined;
+    } | {
+        parms: {
+            hashToken: string;
+            revokeCode: STATUS.REVOKED;
+            nonce: number;
+        };
+        signer: string;
+        signature: any;
+    }>;
+    SendSignedRevokeCodeVC(parms: {
+        hashToken: string;
+        revokeCode: STATUS;
+        nonce: number;
+    }, signer: string, signature: string): Promise<{
         receipt: any;
     }>;
     GetRevokeCodeVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string): Promise<{

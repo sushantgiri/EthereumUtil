@@ -2,7 +2,7 @@ const didJWT = require('did-jwt')
 const { DualDID, STATUS, ERROR } = require('../lib/index')
 const Web3 = require('web3')
 const provider = 'http://182.162.89.51:4313'
-const smartContractAddress = '0x3CF0CB3cD457b959F6027676dF79200C8EF19907'
+const smartContractAddress = '0x83E7851AC8393Fdd05dB9cb5418B1219B896CfDc'
 
 const web3 = new Web3(provider) // TODO: geth url
 
@@ -84,16 +84,32 @@ async function vc () {
   console.log(JSON.stringify((await verifier.verifyVP(vp, '12312312')), null, 4))
 
   console.log("<- GetRevokeCodeVC ------------------------------->")
-  const result1 = await issuer.GetRevokeCodeVC( vc.hashToken, credentialStatus, issuer.getDid().replace('did:dual:', ''))
+  const result1 = await issuer.GetRevokeCodeVC(vc.hashToken, credentialStatus, issuer.getAddress())
   console.log(result1)
   /*
   console.log("<- setStatusVC ------------------------------->")
-  const receipt = await issuer.SetRevokeCodeVC( vc.hashToken, credentialStatus, STATUS.REVOKED)
+  const receipt = await issuer.SetRevokeCodeVC(vc.hashToken, credentialStatus, STATUS.REVOKED)
   console.log(receipt)
 
   console.log("<- GetRevokeCodeVC ------------------------------->")
-  const result2 = await issuer.GetRevokeCodeVC( vc.hashToken, credentialStatus, issuer.getDid().replace('did:dual:', ''))
+  const result2 = await issuer.GetRevokeCodeVC(vc.hashToken, credentialStatus, issuer.getAddress())
   console.log(result2)
+
+  console.log("<- verifyVP ------------------------------->")
+  console.log(JSON.stringify((await verifier.verifyVP(vp, '12312312')), null, 4))
+  */
+  /*
+  console.log("<- SignRevokeCodeVC ------------------------------->")
+  const result2 = await issuer.SignRevokeCodeVC(vc.hashToken, credentialStatus, STATUS.REVOKED)
+  console.log(result2)
+
+  console.log("<- SendSignedRevokeCodeVC ------------------------------->")
+  const receipt = await verifier.SendSignedRevokeCodeVC(result2.parms, result2.signer, result2.signature)
+  console.log(receipt)
+
+  console.log("<- GetRevokeCodeVC ------------------------------->")
+  const result3 = await issuer.GetRevokeCodeVC(vc.hashToken, credentialStatus, issuer.getAddress())
+  console.log(result3)
 
   console.log("<- verifyVP ------------------------------->")
   console.log(JSON.stringify((await verifier.verifyVP(vp, '12312312')), null, 4))

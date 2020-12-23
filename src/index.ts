@@ -9,6 +9,8 @@ import { ERROR } from './error'
 const abi = require('../contracts/abi')
 
 const BLOCKCHAIN = 'blockChainCheck'
+const DEFAULTGAS = 500000
+const DEFAULTGASPRICE = 0
 
 interface CredentialStatus {
   id?: string,
@@ -98,6 +100,10 @@ export class DualDID {
     return `did:dual:${this.dualSigner.ethAccount.address.toLowerCase()}`
   }
 
+  getAddress() {
+    return this.dualSigner.ethAccount.address.toLowerCase()
+  }
+
   async createDid () {
     const jwt = await createJWT(
       {
@@ -164,11 +170,38 @@ export class DualDID {
       // TODO: test credentialStatus
       return { receipt: null }
     }
+    const nonce = await this.contract.methods.GetNonceVC(this.dualSigner.ethAccount.address).call()
     const rawTx = {
       to: this.contract.options.address,
-      gas: 400000, // gas free
-      gasPrice: 0,
-      data: this.web3 ? this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode).encodeABI() : null
+      gas: DEFAULTGAS, // TODO: estimate gas
+      gasPrice: DEFAULTGASPRICE,
+      data: this.web3 ? this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode, nonce).encodeABI() : null
+    }
+    const signedTx = await this.dualSigner.ethAccount.signTransaction(rawTx)
+    const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
+    return { receipt }
+  }
+
+  async SignRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, revokeCode:STATUS = STATUS.REVOKED) {
+    if (revokeCode === STATUS.ACTIVATE || revokeCode === STATUS.ERROR) {
+      return { parms: { hashToken, revokeCode, nonce: 0 }, signature: null } 
+    }
+    if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
+      // TODO: test credentialStatus
+      return { parms: { hashToken, revokeCode, nonce: 0 }, signature: null }
+    }
+    const nonce = await this.contract.methods.GetNonceVC(this.dualSigner.ethAccount.address).call()
+    const data = this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode, nonce).encodeABI()
+    const sign = await this.dualSigner.ethAccount.sign(this.web3.utils.sha3(data))
+    return {parms: { hashToken, revokeCode, nonce: parseInt(nonce) }, signer: this.dualSigner.ethAccount.address, signature: sign.signature }
+  }
+
+  async SendSignedRevokeCodeVC (parms: {hashToken: string, revokeCode:STATUS, nonce: number}, signer: string, signature: string) {
+    const rawTx = {
+      to: this.contract.options.address,
+      gas: DEFAULTGAS, // TODO: estimate gas
+      gasPrice: DEFAULTGASPRICE,
+      data: this.web3 ? this.contract.methods.SetRevokeCodeVC2(parms.hashToken, parms.revokeCode, parms.nonce, signer, signature).encodeABI() : null
     }
     const signedTx = await this.dualSigner.ethAccount.signTransaction(rawTx)
     const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
@@ -181,7 +214,7 @@ export class DualDID {
         // TODO: test credentialStatus
         return { success: true, status: STATUS.ACTIVATE }
       }
-      const status = this.web3 ? await this.contract.methods.GetRevokeCodeVC(hashToken, issuer).call() : STATUS.ERROR
+      const status = this.web3 ? await this.contract.methods.GetRevokeCodeVC(hashToken, issuer.replace('did:dual:', '')).call() : STATUS.ERROR
       return { success: true, status: parseInt(status) }
     } catch (error) {
       console.log(new Error(error))
