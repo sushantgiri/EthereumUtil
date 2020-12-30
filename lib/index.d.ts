@@ -21,7 +21,8 @@ export declare class DualDID {
     private serviceEndpoint;
     private web3;
     private contract;
-    constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3?: any, contractAddress?: string);
+    private api;
+    constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3?: any, contractAddress?: string, apiUrl?: string);
     getDid(): string;
     getAddress(): string;
     createDid(): Promise<{
@@ -69,9 +70,7 @@ export declare class DualDID {
         hashToken: string;
         revokeCode: STATUS;
         nonce: number;
-    }, signer: string, signature: string): Promise<{
-        receipt: any;
-    }>;
+    }, signer: string, signature: string): Promise<any>;
     GetRevokeCodeVC(hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string): Promise<{
         success: boolean;
         status: STATUS;

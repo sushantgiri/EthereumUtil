@@ -11,6 +11,7 @@
   "author": "estorm",
   "license": "MIT",
   "dependencies": {
+    "axios": "^0.21.1",
     "did-jwt": "^4.6.3",
     "did-jwt-vc": "^1.0.6",
     "did-resolver": "^2.1.1",

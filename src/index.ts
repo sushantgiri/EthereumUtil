@@ -5,6 +5,7 @@ import { JwtPresentationPayload, createVerifiablePresentationJwt } from 'did-jwt
 import { verifyCredential, verifyPresentation } from 'did-jwt-vc'
 import { STATUS } from './status'
 import { ERROR } from './error'
+const axios = require('axios')
 
 const abi = require('../contracts/abi')
 
@@ -73,8 +74,9 @@ export class DualDID {
   private serviceEndpoint: any
   private web3: any
   private contract: any
+  private api: any
 
-  constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3: any = null, contractAddress: string = '') {
+  constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3: any = null, contractAddress: string = '', apiUrl: string = '') {
     /*
       const Web3 = require('web3')
       const web3 = new Web3('http://182.162.89.51:8545')
@@ -94,6 +96,9 @@ export class DualDID {
     this.resolver = new Resolver(getResolver(this.getDid(), serviceEndpoint))
     this.web3 = web3
     this.contract = web3 ? new web3.eth.Contract(abi, contractAddress) : null
+    this.api = axios.create({
+      baseURL: apiUrl
+    })
   }
 
   getDid() {
@@ -203,11 +208,22 @@ export class DualDID {
       gasPrice: DEFAULTGASPRICE,
       data: this.web3 ? this.contract.methods.SetRevokeCodeVC2(parms.hashToken, parms.revokeCode, parms.nonce, signer, signature).encodeABI() : null
     }
+    const res = await this.api.post('/rest/metatx', {method: 'SetRevokeCodeVC2', rawTx})
+    return res.data
+  }
+  /*
+  async WriteSignedRevokeCodeVC (parms: {hashToken: string, revokeCode:STATUS, nonce: number}, signer: string, signature: string) {
+    const rawTx = {
+      to: this.contract.options.address,
+      gas: DEFAULTGAS, // TODO: estimate gas
+      gasPrice: DEFAULTGASPRICE,
+      data: this.web3 ? this.contract.methods.SetRevokeCodeVC2(parms.hashToken, parms.revokeCode, parms.nonce, signer, signature).encodeABI() : null
+    }
     const signedTx = await this.dualSigner.ethAccount.signTransaction(rawTx)
     const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
     return { receipt }
   }
-
+  */
   async GetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string): Promise<{success: boolean, status: STATUS}> {
     try {
       if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {

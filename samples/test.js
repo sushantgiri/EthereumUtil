@@ -2,6 +2,7 @@ const didJWT = require('did-jwt')
 const { DualDID, STATUS, ERROR } = require('../lib/index')
 const Web3 = require('web3')
 const provider = 'http://182.162.89.51:4313'
+const apiUrl = 'http://182.162.89.69:3000/'
 const smartContractAddress = '0x83E7851AC8393Fdd05dB9cb5418B1219B896CfDc'
 
 const web3 = new Web3(provider) // TODO: geth url
@@ -29,7 +30,7 @@ const ethAccount3 = createEthAccount(privateKey3)
 
 async function did () {
   const dualSigner = createDualSigner(didJWT.SimpleSigner(privateKey1.replace('0x','')), ethAccount1)
-  const dualDid = new DualDID(dualSigner, 'test1', 'test2', web3, smartContractAddress)
+  const dualDid = new DualDID(dualSigner, 'test1', 'test2', web3, smartContractAddress, apiUrl)
   const did = await dualDid.createDid()
   console.log("<- JWT & signedTx ------------------------------->")
   console.log(did)
@@ -42,9 +43,9 @@ async function vc () {
   const dualSigner2 = createDualSigner(didJWT.SimpleSigner(privateKey2.replace('0x','')), ethAccount2)
   const dualSigner3 = createDualSigner(didJWT.SimpleSigner(privateKey3.replace('0x','')), ethAccount3)
 
-  const issuer = new DualDID(dualSigner1, 'test1', 'test11', web3, smartContractAddress)
-  const holder = new DualDID(dualSigner2, 'test2', 'test22', web3, smartContractAddress)
-  const verifier = new DualDID(dualSigner3, 'test3', 'test33', web3, smartContractAddress)
+  const issuer = new DualDID(dualSigner1, 'test1', 'test11', web3, smartContractAddress, apiUrl)
+  const holder = new DualDID(dualSigner2, 'test2', 'test22', web3, smartContractAddress, apiUrl)
+  const verifier = new DualDID(dualSigner3, 'test3', 'test33', web3, smartContractAddress, apiUrl)
   const credentialStatus = {
     "type": "blockChainCheck"
   }
@@ -98,7 +99,6 @@ async function vc () {
   console.log("<- verifyVP ------------------------------->")
   console.log(JSON.stringify((await verifier.verifyVP(vp, '12312312')), null, 4))
   */
-  /*
   console.log("<- SignRevokeCodeVC ------------------------------->")
   const result2 = await issuer.SignRevokeCodeVC(vc.hashToken, credentialStatus, STATUS.REVOKED)
   console.log(result2)
@@ -113,7 +113,7 @@ async function vc () {
 
   console.log("<- verifyVP ------------------------------->")
   console.log(JSON.stringify((await verifier.verifyVP(vp, '12312312')), null, 4))
-  */
+
 }
 
 // did()
