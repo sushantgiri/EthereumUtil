@@ -3,7 +3,7 @@ const { DualDID, STATUS, ERROR } = require('../lib/index')
 const Web3 = require('web3')
 const provider = 'http://182.162.89.51:4313'
 const apiUrl = 'http://182.162.89.69:3000/'
-const smartContractAddress = '0x83E7851AC8393Fdd05dB9cb5418B1219B896CfDc'
+const smartContractAddress = '0xd8807a7c83B8d0a558A4Fee8be312AAB7A2d1752'
 
 const web3 = new Web3(provider) // TODO: geth url
 
