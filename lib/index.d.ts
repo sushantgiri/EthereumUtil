@@ -25,11 +25,18 @@ export declare class DualDID {
     constructor(dualSigner: DualSigner, issuerName: string, serviceEndpoint: string, web3?: any, contractAddress?: string, apiUrl?: string);
     getDid(): string;
     getAddress(): string;
+    verifyJWT(jwt: string): Promise<import("did-jwt").JWTVerified>;
     createDid(): Promise<{
         jwt: string;
         hashToken: any;
     }>;
-    verifyJWT(jwt: string): Promise<import("did-jwt").JWTVerified>;
+    SetRevokeCodeDid(did: string, revokeCode?: STATUS): Promise<{
+        receipt: any;
+    }>;
+    GetRevokeCodeDid(did: string, issuer: string): Promise<{
+        success: boolean;
+        status: STATUS;
+    }>;
     createVC(vcID: string, vcType: string[], holder: string, credentialSubject: object, credentialStatus: CredentialStatus | null, expirationDate: number, issuanceDate: string): Promise<{
         jwt: string;
         hashType: any;

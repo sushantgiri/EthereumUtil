@@ -109,6 +109,11 @@ export class DualDID {
     return this.dualSigner.ethAccount.address.toLowerCase()
   }
 
+  async verifyJWT (jwt: string) {
+    const result = await verifyJWT(jwt, getResolverFromJwt(jwt, this.serviceEndpoint))
+    return result
+  }
+
   async createDid () {
     const jwt = await createJWT(
       {
@@ -127,9 +132,30 @@ export class DualDID {
     return { jwt, hashToken }
   }
 
-  async verifyJWT (jwt: string) {
-    const result = await verifyJWT(jwt, getResolverFromJwt(jwt, this.serviceEndpoint))
-    return result
+  async SetRevokeCodeDid (did: string, revokeCode:STATUS = STATUS.REVOKED) {
+    if (revokeCode === STATUS.ACTIVATE || revokeCode === STATUS.ERROR) {
+      return { receipt: null } 
+    }
+    const nonce = await this.contract.methods.GetNonceDID(this.dualSigner.ethAccount.address).call()
+    const rawTx = {
+      to: this.contract.options.address,
+      gas: DEFAULTGAS, // TODO: estimate gas
+      gasPrice: DEFAULTGASPRICE,
+      data: this.web3 ? this.contract.methods.SetRevokeCodeDID(did.replace('did:dual:', ''), revokeCode, nonce).encodeABI() : null
+    }
+    const signedTx = await this.dualSigner.ethAccount.signTransaction(rawTx)
+    const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
+    return { receipt }
+  }
+
+  async GetRevokeCodeDid (did: string, issuer: string): Promise<{success: boolean, status: STATUS}> {
+    try {
+      const status = this.web3 ? await this.contract.methods.GetRevokeCodeDID(did.replace('did:dual:', ''), issuer.replace('did:dual:', '')).call() : STATUS.ERROR
+      return { success: true, status: parseInt(status) }
+    } catch (error) {
+      console.log(new Error(error))
+      return { success: false, status: STATUS.ERROR }
+    }
   }
 
   async createVC (vcID: string, vcType: string[], holder: string, credentialSubject: object, credentialStatus: CredentialStatus | null, expirationDate: number, issuanceDate: string) {
