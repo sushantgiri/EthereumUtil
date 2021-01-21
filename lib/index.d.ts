@@ -33,6 +33,26 @@ export declare class DualDID {
     SetRevokeCodeDid(did: string, revokeCode?: STATUS): Promise<{
         receipt: any;
     }>;
+    SignRevokeCodeDid(did: string, revokeCode?: STATUS): Promise<{
+        receipt: null;
+        parms?: undefined;
+        signer?: undefined;
+        signature?: undefined;
+    } | {
+        parms: {
+            did: string;
+            revokeCode: STATUS.REVOKED;
+            nonce: number;
+        };
+        signer: string;
+        signature: any;
+        receipt?: undefined;
+    }>;
+    SendSignedRevokeCodeDid(parms: {
+        did: string;
+        revokeCode: STATUS;
+        nonce: number;
+    }, signer: string, signature: string): Promise<any>;
     GetRevokeCodeDid(did: string, issuer: string): Promise<{
         success: boolean;
         status: STATUS;

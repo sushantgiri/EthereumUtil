@@ -36,6 +36,11 @@ async function did () {
   console.log(did)
   console.log("<- verifyJWT ------------------------------->")
   console.log(JSON.stringify((await dualDid.verifyJWT(did.jwt)), null, 4))
+
+  const result0 = await dualDid.SetRevokeCodeDid(dualDid.getDid())
+  console.log(result0)
+  const result1 = await dualDid.GetRevokeCodeDid(dualDid.getDid(), dualDid.getDid())
+  console.log(result1)
 }
 
 async function vc () {
@@ -116,5 +121,5 @@ async function vc () {
 
 }
 
-// did()
-vc()
+did()
+// vc()

@@ -10,6 +10,7 @@ const axios = require('axios')
 const abi = require('../contracts/abi')
 
 const BLOCKCHAIN = 'blockChainCheck'
+const NONE = 'none'
 const DEFAULTGAS = 500000
 const DEFAULTGASPRICE = 0
 
@@ -148,6 +149,28 @@ export class DualDID {
     return { receipt }
   }
 
+  async SignRevokeCodeDid (did: string, revokeCode:STATUS = STATUS.REVOKED) {
+    if (revokeCode === STATUS.ACTIVATE || revokeCode === STATUS.ERROR) {
+      return { receipt: null } 
+    }
+    const _did = did.replace('did:dual:', '')
+    const nonce = await this.contract.methods.GetNonceDID(this.dualSigner.ethAccount.address).call()
+    const data = this.contract.methods.SetRevokeCodeDID(_did, revokeCode, nonce).encodeABI()
+    const sign = await this.dualSigner.ethAccount.sign(this.web3.utils.sha3(data))
+    return {parms: { did: _did, revokeCode, nonce: parseInt(nonce) }, signer: this.dualSigner.ethAccount.address, signature: sign.signature }
+  }
+
+  async SendSignedRevokeCodeDid (parms: {did: string, revokeCode:STATUS, nonce: number}, signer: string, signature: string) {
+    const rawTx = {
+      to: this.contract.options.address,
+      gas: DEFAULTGAS, // TODO: estimate gas
+      gasPrice: DEFAULTGASPRICE,
+      data: this.web3 ? this.contract.methods.SetRevokeCodeDID2(parms.did, parms.revokeCode, parms.nonce, signer, signature).encodeABI() : null
+    }
+    const res = await this.api.post('/rest/metatx', {method: 'SetRevokeCodeVC2', rawTx})
+    return res.data
+  }
+
   async GetRevokeCodeDid (did: string, issuer: string): Promise<{success: boolean, status: STATUS}> {
     try {
       const status = this.web3 ? await this.contract.methods.GetRevokeCodeDID(did.replace('did:dual:', ''), issuer.replace('did:dual:', '')).call() : STATUS.ERROR
@@ -197,7 +220,7 @@ export class DualDID {
     if (revokeCode === STATUS.ACTIVATE || revokeCode === STATUS.ERROR) {
       return { receipt: null } 
     }
-    if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
+    if (!credentialStatus || credentialStatus.type === NONE || credentialStatus.type !== BLOCKCHAIN ) {
       // TODO: test credentialStatus
       return { receipt: null }
     }
@@ -217,7 +240,7 @@ export class DualDID {
     if (revokeCode === STATUS.ACTIVATE || revokeCode === STATUS.ERROR) {
       return { parms: { hashToken, revokeCode, nonce: 0 }, signature: null } 
     }
-    if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
+    if (!credentialStatus || credentialStatus.type === NONE || credentialStatus.type !== BLOCKCHAIN ) {
       // TODO: test credentialStatus
       return { parms: { hashToken, revokeCode, nonce: 0 }, signature: null }
     }
@@ -252,7 +275,7 @@ export class DualDID {
   */
   async GetRevokeCodeVC (hashToken: string, credentialStatus: CredentialStatus | null | undefined, issuer: string): Promise<{success: boolean, status: STATUS}> {
     try {
-      if (!credentialStatus || credentialStatus.type !== BLOCKCHAIN ) {
+      if (!credentialStatus || credentialStatus.type === NONE || credentialStatus.type !== BLOCKCHAIN ) {
         // TODO: test credentialStatus
         return { success: true, status: STATUS.ACTIVATE }
       }
