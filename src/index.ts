@@ -115,6 +115,7 @@ export class DualDID {
     return result
   }
 
+  // DID
   async createDid () {
     const jwt = await createJWT(
       {
@@ -137,12 +138,13 @@ export class DualDID {
     if (revokeCode === STATUS.ACTIVATE || revokeCode === STATUS.ERROR) {
       return { receipt: null } 
     }
-    const nonce = await this.contract.methods.GetNonceDID(this.dualSigner.ethAccount.address).call()
+    const _did = did.replace('did:dual:', '')
+    const timestamp = new Date().getTime();
     const rawTx = {
       to: this.contract.options.address,
       gas: DEFAULTGAS, // TODO: estimate gas
       gasPrice: DEFAULTGASPRICE,
-      data: this.web3 ? this.contract.methods.SetRevokeCodeDID(did.replace('did:dual:', ''), revokeCode, nonce).encodeABI() : null
+      data: this.web3 ? this.contract.methods.SetRevokeCodeDID(_did, revokeCode, timestamp).encodeABI() : null
     }
     const signedTx = await this.dualSigner.ethAccount.signTransaction(rawTx)
     const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
@@ -154,20 +156,22 @@ export class DualDID {
       return { receipt: null } 
     }
     const _did = did.replace('did:dual:', '')
-    const nonce = await this.contract.methods.GetNonceDID(this.dualSigner.ethAccount.address).call()
-    const data = this.contract.methods.SetRevokeCodeDID(_did, revokeCode, nonce).encodeABI()
+    const timestamp = new Date().getTime();
+    const data = this.contract.methods.SetRevokeCodeDID(_did, revokeCode, timestamp).encodeABI()
     const sign = await this.dualSigner.ethAccount.sign(this.web3.utils.sha3(data))
-    return {parms: { did: _did, revokeCode, nonce: parseInt(nonce) }, signer: this.dualSigner.ethAccount.address, signature: sign.signature }
+    return {parms: { did: _did, revokeCode, timestamp }, signer: this.dualSigner.ethAccount.address, signature: sign.signature }
   }
 
-  async SendSignedRevokeCodeDid (parms: {did: string, revokeCode:STATUS, nonce: number}, signer: string, signature: string) {
+  async SendSignedRevokeCodeDid (parms: {did: string, revokeCode:STATUS, timestamp: number}, signer: string, signature: string) {
+    /*
     const rawTx = {
       to: this.contract.options.address,
       gas: DEFAULTGAS, // TODO: estimate gas
       gasPrice: DEFAULTGASPRICE,
-      data: this.web3 ? this.contract.methods.SetRevokeCodeDID2(parms.did, parms.revokeCode, parms.nonce, signer, signature).encodeABI() : null
+      data: this.web3 ? this.contract.methods.SetRevokeCodeDID2(parms.did, parms.revokeCode, parms.timestamp, signer, signature).encodeABI() : null
     }
-    const res = await this.api.post('/rest/metatx', {method: 'SetRevokeCodeVC2', rawTx})
+    */
+    const res = await this.api.post('/rest/metatx', { method: 'SetRevokeCodeDID2', parms, signer, signature })
     return res.data
   }
 
@@ -181,6 +185,7 @@ export class DualDID {
     }
   }
 
+  //   VC
   async createVC (vcID: string, vcType: string[], holder: string, credentialSubject: object, credentialStatus: CredentialStatus | null, expirationDate: number, issuanceDate: string) {
     const vcPayload: JwtCredentialPayload = {
       sub: holder,
@@ -224,12 +229,12 @@ export class DualDID {
       // TODO: test credentialStatus
       return { receipt: null }
     }
-    const nonce = await this.contract.methods.GetNonceVC(this.dualSigner.ethAccount.address).call()
+    const timestamp = new Date().getTime();
     const rawTx = {
       to: this.contract.options.address,
       gas: DEFAULTGAS, // TODO: estimate gas
       gasPrice: DEFAULTGASPRICE,
-      data: this.web3 ? this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode, nonce).encodeABI() : null
+      data: this.web3 ? this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode, timestamp).encodeABI() : null
     }
     const signedTx = await this.dualSigner.ethAccount.signTransaction(rawTx)
     const receipt = this.web3 ? await this.web3.eth.sendSignedTransaction(signedTx.rawTransaction) : null
@@ -244,20 +249,22 @@ export class DualDID {
       // TODO: test credentialStatus
       return { parms: { hashToken, revokeCode, nonce: 0 }, signature: null }
     }
-    const nonce = await this.contract.methods.GetNonceVC(this.dualSigner.ethAccount.address).call()
-    const data = this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode, nonce).encodeABI()
+    const timestamp = new Date().getTime();
+    const data = this.contract.methods.SetRevokeCodeVC(hashToken, revokeCode, timestamp).encodeABI()
     const sign = await this.dualSigner.ethAccount.sign(this.web3.utils.sha3(data))
-    return {parms: { hashToken, revokeCode, nonce: parseInt(nonce) }, signer: this.dualSigner.ethAccount.address, signature: sign.signature }
+    return {parms: { hashToken, revokeCode, timestamp }, signer: this.dualSigner.ethAccount.address, signature: sign.signature }
   }
 
   async SendSignedRevokeCodeVC (parms: {hashToken: string, revokeCode:STATUS, nonce: number}, signer: string, signature: string) {
+    /*
     const rawTx = {
       to: this.contract.options.address,
       gas: DEFAULTGAS, // TODO: estimate gas
       gasPrice: DEFAULTGASPRICE,
-      data: this.web3 ? this.contract.methods.SetRevokeCodeVC2(parms.hashToken, parms.revokeCode, parms.nonce, signer, signature).encodeABI() : null
+      data: this.web3 ? this.contract.methods.SetRevokeCodeVC2(parms.hashToken, parms.revokeCode, parms.timestamp, signer, signature).encodeABI() : null
     }
-    const res = await this.api.post('/rest/metatx', {method: 'SetRevokeCodeVC2', rawTx})
+    */
+    const res = await this.api.post('/rest/metatx', { method: 'SetRevokeCodeVC2', parms, signer, signature })
     return res.data
   }
   /*

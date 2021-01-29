@@ -42,7 +42,7 @@ export declare class DualDID {
         parms: {
             did: string;
             revokeCode: STATUS.REVOKED;
-            nonce: number;
+            timestamp: number;
         };
         signer: string;
         signature: any;
@@ -51,7 +51,7 @@ export declare class DualDID {
     SendSignedRevokeCodeDid(parms: {
         did: string;
         revokeCode: STATUS;
-        nonce: number;
+        timestamp: number;
     }, signer: string, signature: string): Promise<any>;
     GetRevokeCodeDid(did: string, issuer: string): Promise<{
         success: boolean;
@@ -73,6 +73,7 @@ export declare class DualDID {
             hashToken: string;
             revokeCode: STATUS.ACTIVATE | STATUS.ERROR;
             nonce: number;
+            timestamp?: undefined;
         };
         signature: null;
         signer?: undefined;
@@ -81,6 +82,7 @@ export declare class DualDID {
             hashToken: string;
             revokeCode: STATUS.REVOKED;
             nonce: number;
+            timestamp?: undefined;
         };
         signature: null;
         signer?: undefined;
@@ -88,7 +90,8 @@ export declare class DualDID {
         parms: {
             hashToken: string;
             revokeCode: STATUS.REVOKED;
-            nonce: number;
+            timestamp: number;
+            nonce?: undefined;
         };
         signer: string;
         signature: any;
